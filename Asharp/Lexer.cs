@@ -20,16 +20,13 @@ public class Lexer
         if (char.IsDigit(Current))
         {
             var start = _position;
-            while (char.IsDigit(Current))
-            {
-                Next();
-            }
+            while (char.IsDigit(Current)) Next();
             var length = _position - start;
             int.TryParse(_text.Substring(start, length), out var value);
             var text = _text.Substring(start, length);
             return new SyntaxToken(SyntaxKind.NumberToken, start, text, value);
         }
-        
+
     }
 }
 
