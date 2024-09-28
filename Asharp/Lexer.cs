@@ -1,51 +1,75 @@
 namespace Asharp;
 
-public class Lexer
+public class Lexer(string text)
 {
-    private readonly string _text;
     private int _position;
 
-    public Lexer(string text)
-    {
-        _text = text;
-    }
-
-    private char Current => _position >= _text.Length ? '\0' : _text[_position];
+    private char Current => _position >= text.Length ? '\0' : text[_position];
+    private char Peek => _position + 1 >= text.Length ? '\0' : text[_position + 1];
     private void Next()
     {
         _position++;
     }
     public SyntaxToken NextToken()
     {
+        switch (Current)
+        {
+            case '(': return new SyntaxToken(SyntaxKind.LeftParenToken, _position, "(");
+            case ')': return new SyntaxToken(SyntaxKind.RightParenToken, _position, ")");
+            case '[': return new SyntaxToken(SyntaxKind.LeftBracketToken, _position, "[");
+            case ']': return new SyntaxToken(SyntaxKind.RightBracketToken, _position, "]");
+            case '{': return new SyntaxToken(SyntaxKind.LeftBraceToken, _position, "{");
+            case '}': return new SyntaxToken(SyntaxKind.RightBraceToken, _position, "}");
+            case '+': return new SyntaxToken(SyntaxKind.PlusToken, _position, "+");
+            case '-': return new SyntaxToken(SyntaxKind.MinusToken, _position, "-");
+            case '*': return new SyntaxToken(SyntaxKind.StarToken, _position, "*");
+            case '/':
+                {
+                    if (Peek == '/')
+                    {
+                        // comment
+                        while (Current is not '\n' or '\0') Next();
+                    }
+                    else
+                    {
+                        return new SyntaxToken(SyntaxKind.SlashToken, _position, "/");
+                    }
+                }
+                break;
+        }
         if (char.IsDigit(Current))
         {
             var start = _position;
             while (char.IsDigit(Current)) Next();
             var length = _position - start;
-            int.TryParse(_text.Substring(start, length), out var value);
-            var text = _text.Substring(start, length);
-            return new SyntaxToken(SyntaxKind.NumberToken, start, text, value);
+            _ = int.TryParse(text.AsSpan(start, length), out var value);
+            var text1 = text.Substring(start, length);
+            return new SyntaxToken(SyntaxKind.NumberToken, start, text1, value);
         }
-
+        return new SyntaxToken(SyntaxKind.BadToken, _position, "Bad Token");
     }
 }
 
-public class SyntaxToken
+public class SyntaxToken(SyntaxKind kind, int position, string text, object? value = null)
 {
-    private readonly object _value;
-    public SyntaxToken(SyntaxKind kind, int position, string text, object value)
-    {
-        _value = value;
-        Kind = kind;
-        Position = position;
-        Text = text;
-    }
-    public int Position { get; set; }
-    public SyntaxKind Kind { get; set; }
-    public string Text { get; set; }
+    public object? Value { get; } = value;
+    public int Position { get; set; } = position;
+    public SyntaxKind Kind { get; set; } = kind;
+    public string Text { get; set; } = text;
 }
 
 public enum SyntaxKind
 {
-    NumberToken
+    NumberToken,
+    PlusToken,
+    SlashToken,
+    LeftParenToken,
+    MinusToken,
+    StarToken,
+    RightParenToken,
+    LeftBracketToken,
+    RightBracketToken,
+    LeftBraceToken,
+    RightBraceToken,
+    BadToken
 }
