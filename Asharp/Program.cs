@@ -2,9 +2,9 @@
 
 namespace Asharp;
 
-class Program
+internal static class Program
 {
-    static void Main(string[] args)
+    private static void Main(string[] args)
     {
         switch (args.Length)
         {
@@ -19,7 +19,7 @@ class Program
         }
     }
 
-    static void Repl()
+    private static void Repl()
     {
         while (true)
         {
@@ -34,7 +34,7 @@ class Program
         }
     }
 
-    static void File(string path)
+    private static void File(string path)
     {
         using StreamReader reader = new(path);
         var text = reader.ReadToEnd();
