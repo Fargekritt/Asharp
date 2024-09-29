@@ -128,15 +128,16 @@ public class Lexer
 
     private bool IsNewline(char ch)
     {
-        if (ch == '\r')
+        switch (ch)
         {
-            if (Peek == '\n') return false;
-            if (Peek != '\n') return true;
+            case '\r' when Peek == '\n':
+                return false;
+            case '\r' when Peek != '\n':
+            case '\n':
+                return true;
+            default:
+                return false;
         }
-
-        if (ch == '\n') return true;
-
-        return false;
     }
 }
 
