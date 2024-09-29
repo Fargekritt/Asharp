@@ -6,7 +6,6 @@ class Program
 {
     static void Main(string[] args)
     {
-        Console.WriteLine("Hello, Worsld!");
         using StreamReader reader = new("main.as");
         var text = reader.ReadToEnd();
         Console.WriteLine(text);

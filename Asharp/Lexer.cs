@@ -6,104 +6,154 @@ public class Lexer
 {
     private int _position;
     private readonly string _text;
+
     public Lexer(string text)
     {
         _text = text;
     }
+
     public List<SyntaxToken> Tokens { get; private set; } = [];
     private char Current => _position >= _text.Length ? '\0' : _text[_position];
     private char Peek => _position + 1 >= _text.Length ? '\0' : _text[_position + 1];
     private bool EOF => _position >= _text.Length;
+
+    private int _line = 0;
+
     private void Next()
     {
         _position++;
     }
+
     public void ScanTokens()
     {
         while (!EOF)
         {
-            Tokens.Add(ScanToken());
+            ScanToken();
             Next();
         }
+        AddToken(SyntaxKind.EOF);
     }
-    private SyntaxToken ScanToken()
+
+   
+
+    private void ScanToken()
     {
-        // TODO: Rework needed. Probably add token instead of returning token?
-        // Hard to handle when there is no token to be return like " " or comment       
-        while (true)
+        switch (Current)
         {
-
-            switch (Current)
+            case '(':
+                AddToken(SyntaxKind.LeftParenToken);
+                break;
+            case ')':
+                AddToken(SyntaxKind.RightParenToken);
+                break;
+            case '[':
+                AddToken(SyntaxKind.LeftBracketToken);
+                break;
+            case ']':
+                AddToken(SyntaxKind.RightBracketToken);
+                break;
+            case '{':
+                AddToken(SyntaxKind.LeftBraceToken);
+                break;
+            case '}':
+                AddToken(SyntaxKind.RightBraceToken);
+                break;
+            case '+':
+                AddToken(SyntaxKind.PlusToken);
+                break;
+            case '-':
+                AddToken(SyntaxKind.MinusToken);
+                break;
+            case '*':
+                AddToken(SyntaxKind.StarToken);
+                break;
+            case '\n':
+                _line++;
+                break;
+            case '/':
             {
-                case '(': return new SyntaxToken(SyntaxKind.LeftParenToken, _position, "(");
-                case ')': return new SyntaxToken(SyntaxKind.RightParenToken, _position, ")");
-                case '[': return new SyntaxToken(SyntaxKind.LeftBracketToken, _position, "[");
-                case ']': return new SyntaxToken(SyntaxKind.RightBracketToken, _position, "]");
-                case '{': return new SyntaxToken(SyntaxKind.LeftBraceToken, _position, "{");
-                case '}': return new SyntaxToken(SyntaxKind.RightBraceToken, _position, "}");
-                case '+': return new SyntaxToken(SyntaxKind.PlusToken, _position, "+");
-                case '-': return new SyntaxToken(SyntaxKind.MinusToken, _position, "-");
-                case '*': return new SyntaxToken(SyntaxKind.StarToken, _position, "*");
-                case '/':
-                    {
-                        if (Peek == '/')
-                        {
-                            // comment
-                            while (!IsNewline(Peek) && !EOF) Next();
-                            // line++
-                        }
-                        else
-                        {
-                            return new SyntaxToken(SyntaxKind.SlashToken, _position, "/");
-                        }
-                    }
+                if (Peek == '/')
+                {
+                    // comment
+                    while (!IsNewline(Current) && !EOF) Next();
+                    // line++
+                }
+                else
+                {
+                    AddToken(SyntaxKind.SlashToken);
+                }
+            }
+                break;
+            case ' ' or '\t':
+            {
+                while (Peek is ' ' or '\t' && !EOF)
+                {
+                    Console.WriteLine((int)Current);
+                    Next();
+                }
+
+                break;
+            }
+            default:
+                if (char.IsDigit(Current))
+                {
+                    var start = _position;
+                    while (char.IsDigit(Peek)) Next();
+                    var length = _position - start + 1;
+                    _ = int.TryParse(_text.AsSpan(start, length), out var value);
+                    var text = _text.Substring(start, length); 
+                    AddToken(SyntaxKind.NumberToken, text, value);
                     break;
-                case ' ' or '\r' or '\t' or '\n' or (char)10:
-                    {
-
-                        while (Current is ' ' or '\r' or '\n' or (char)10 && !EOF)
-                        {
-                            Console.WriteLine((int)Current);
-                            Next();
-                        }
-                        continue;
-                    }
-            }
+                }
 
 
-            if (char.IsDigit(Current))
-            {
-                var start = _position;
-                while (char.IsDigit(Current)) Next();
-                var length = _position - start;
-                _ = int.TryParse(_text.AsSpan(start, length), out var value);
-                var text1 = _text.Substring(start, length);
-                return new SyntaxToken(SyntaxKind.NumberToken, start, text1, value);
-            }
-            if (EOF)
-            {
-                return new SyntaxToken(SyntaxKind.EOF, _position, "EOF");
-            }
-            throw new Exception($"Cant find token for {Current}");
+                throw new Exception($"Cant find token for {Current}");
         }
     }
-    private void AddToken(SyntaxKind kind, object? value = null)
+
+    private void AddToken(SyntaxKind kind, string? text = null, object? value = null)
     {
-        // Tokens.Add(new SyntaxToken(kind, line, )); 
+        if (EOF)
+        {
+            Tokens.Add(new SyntaxToken(kind, _line, "EOF", value));
+            return;
+        }    
+        text ??= _text.Substring(_position, 1);
+        
+        Tokens.Add(new SyntaxToken(kind, _line, text, value));
     }
-    private bool IsNewline(char ch) => ch is '\r' || ch is '\n';
+
+    private bool IsNewline(char ch)
+    {
+        if (ch == '\r' && Peek == '\n')
+        {
+            return false;
+        }
+
+        if (ch == '\r' && Peek != '\n')
+        {
+            return true;
+        }
+
+        if (ch == '\n')
+        {
+            return true;
+        }
+
+        return false;
+    }
 }
 
-public class SyntaxToken(SyntaxKind kind, int position, string text, object? value = null)
+public class SyntaxToken(SyntaxKind kind, int line, string text, object? value = null)
 {
     public object? Value { get; } = value;
-    public int Position { get; set; } = position;
+    public int Line { get; set; } = line;
     public SyntaxKind Kind { get; set; } = kind;
     public string Text { get; set; } = text;
 
     public override string ToString()
     {
-        return $"Pos {Position} Type {Kind} Lex {Text} Value {Value}";
+        return $"Line: {Line}, Kind: {Kind}, Lexical {Text}, Value: {Value}";
     }
 }
 
