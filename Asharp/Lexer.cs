@@ -1,18 +1,29 @@
 namespace Asharp;
 
-public class Lexer(string text)
+public class Lexer
 {
     private int _position;
-
-    private char Current => _position >= text.Length ? '\0' : text[_position];
-    private char Peek => _position + 1 >= text.Length ? '\0' : text[_position + 1];
+    private readonly string _text;
+    public Lexer(string text)
+    {
+        _text = text;
+        while(!EOF) Tokens.Add(NextToken());
+    }
+    public List<SyntaxToken> Tokens { get; private set; } = [];
+    private char Current => _position >= _text.Length ? '\0' : _text[_position];
+    private char Peek => _position + 1 >= _text.Length ? '\0' : _text[_position + 1];
+    private bool EOF => _position >= _text.Length;
     private void Next()
     {
         _position++;
     }
     public SyntaxToken NextToken()
     {
-        switch (Current)
+        // TODO: Rework needed. Probably add token instead of returning token?
+        // Hard to handle when there is no token to be return like " " or comment 
+        char ch = Current;
+        Next();
+        switch (ch)
         {
             case '(': return new SyntaxToken(SyntaxKind.LeftParenToken, _position, "(");
             case ')': return new SyntaxToken(SyntaxKind.RightParenToken, _position, ")");
@@ -28,7 +39,7 @@ public class Lexer(string text)
                     if (Peek == '/')
                     {
                         // comment
-                        while (Current is not '\n' or '\0') Next();
+                        while (Current is not '\n' || !EOF) Next();
                     }
                     else
                     {
@@ -37,14 +48,18 @@ public class Lexer(string text)
                 }
                 break;
         }
-        if (char.IsDigit(Current))
+        if (char.IsDigit(ch))
         {
             var start = _position;
             while (char.IsDigit(Current)) Next();
             var length = _position - start;
-            _ = int.TryParse(text.AsSpan(start, length), out var value);
-            var text1 = text.Substring(start, length);
+            _ = int.TryParse(_text.AsSpan(start, length), out var value);
+            var text1 = _text.Substring(start, length);
             return new SyntaxToken(SyntaxKind.NumberToken, start, text1, value);
+        }
+        if (EOF)
+        {
+            return new SyntaxToken(SyntaxKind.EOF, _position, "EOF");
         }
         return new SyntaxToken(SyntaxKind.BadToken, _position, "Bad Token");
     }
@@ -56,6 +71,11 @@ public class SyntaxToken(SyntaxKind kind, int position, string text, object? val
     public int Position { get; set; } = position;
     public SyntaxKind Kind { get; set; } = kind;
     public string Text { get; set; } = text;
+
+    public override string ToString()
+    {
+        return $"Pos {Position} Type {Kind} Lex {Text} Value {Value}";
+    }
 }
 
 public enum SyntaxKind
@@ -71,5 +91,6 @@ public enum SyntaxKind
     RightBracketToken,
     LeftBraceToken,
     RightBraceToken,
-    BadToken
+    BadToken,
+    EOF
 }
