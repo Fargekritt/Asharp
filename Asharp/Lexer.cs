@@ -10,6 +10,7 @@ public class Lexer
     public Lexer(string text)
     {
         _text = text;
+        ScanTokens();
     }
 
     public List<SyntaxToken> Tokens { get; private set; } = [];
@@ -24,7 +25,7 @@ public class Lexer
         _position++;
     }
 
-    public void ScanTokens()
+    private void ScanTokens()
     {
         while (!EOF)
         {
@@ -70,13 +71,15 @@ public class Lexer
             case '\n':
                 _line++;
                 break;
+            case '\r':
+                if (Peek != '\n') _line++;
+                break;
             case '/':
             {
                 if (Peek == '/')
                 {
-                    // comment
                     while (!IsNewline(Current) && !EOF) Next();
-                    // line++
+                    _line++;
                 }
                 else
                 {
@@ -125,20 +128,13 @@ public class Lexer
 
     private bool IsNewline(char ch)
     {
-        if (ch == '\r' && Peek == '\n')
+        if (ch == '\r')
         {
-            return false;
+            if (Peek == '\n') return false;
+            if (Peek != '\n') return true;
         }
 
-        if (ch == '\r' && Peek != '\n')
-        {
-            return true;
-        }
-
-        if (ch == '\n')
-        {
-            return true;
-        }
+        if (ch == '\n') return true;
 
         return false;
     }

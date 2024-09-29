@@ -22,7 +22,18 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Asharp\Asharp.csproj" />
+        <ProjectReference Include="..\Asharp\Asharp.csproj"/>
+    </ItemGroup>
+    <ItemGroup>
+        <Content Include="CR.as">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+        <Content Include="CRLF.as">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+        <Content Include="LF.as">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
     </ItemGroup>
 
 </Project>

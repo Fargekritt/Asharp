@@ -3,27 +3,39 @@ using NUnit.Framework.Constraints;
 
 namespace ASharpTest;
 
+[TestFixture]
 public class Tests
 {
-    Lexer _lexer;
     [SetUp]
     public void Setup()
     {
-        _lexer = new Lexer("2 + 3\n5 + 2");
-        _lexer.ScanTokens();
     }
 
     [Test]
-    public void TestTokenCount()
+    [TestCaseSource(nameof(Files))]
+    public void TestTokenCount(string filename)
     {
-
-        Assert.That(_lexer.Tokens, Has.Count.EqualTo(7));
+        using StreamReader reader = new(filename);
+        var text = reader.ReadToEnd();
+        var lexer = new Lexer(text);
+        Assert.That(lexer.Tokens, Has.Count.EqualTo(7));
     }
 
     [Test]
-    public void TestLineNumber()
+    [TestCaseSource(nameof(Files))]
+    public void TestLineNumber(string filename)
     {
-        Assert.That(_lexer.Tokens[4].Line, Is.EqualTo(1) );
-        Assert.That(_lexer.Tokens[2].Line, Is.EqualTo(0) );
+        using StreamReader reader = new(filename);
+        var text = reader.ReadToEnd();
+        var lexer = new Lexer(text);
+        Assert.That(lexer.Tokens[4].Line, Is.EqualTo(1));
+        Assert.That(lexer.Tokens[2].Line, Is.EqualTo(0));
+    }
+
+    private static IEnumerable<string> Files()
+    {
+        yield return "LF.as";
+        yield return "CRLF.as";
+        yield return "CR.as";
     }
 }
