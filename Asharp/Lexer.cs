@@ -68,6 +68,9 @@ public class Lexer
             case '*':
                 AddToken(SyntaxKind.StarToken);
                 break;
+            case '!':
+                AddToken(SyntaxKind.BangToken); 
+                break;
             case '\n':
                 _line++;
                 break;
@@ -168,5 +171,6 @@ public enum SyntaxKind
     LeftBraceToken,
     RightBraceToken,
     BadToken,
-    EOF
+    EOF,
+    BangToken
 }

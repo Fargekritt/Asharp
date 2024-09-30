@@ -9,10 +9,10 @@ internal static class Program
         switch (args.Length)
         {
             case 1:
-            {
-                File(args.First());
-                break;
-            }
+                {
+                    File(args.First());
+                    break;
+                }
             case 0:
                 Repl();
                 break;
@@ -25,12 +25,16 @@ internal static class Program
         {
             Console.Write("> ");
             var line = Console.ReadLine();
-            if(line == "exit") return;
+            if (line == "exit") return;
             var lexer = new Lexer(line!);
-            foreach (var token in lexer.Tokens)
+            var parser = new Parser(lexer.Tokens);
+            var astPrinter = new AstPrinter();
+            foreach (var expr in parser.Parse())
             {
-                Console.WriteLine(token.ToString());
+                Console.WriteLine(astPrinter.Print(expr));
             }
+
+
         }
     }
 
@@ -43,6 +47,11 @@ internal static class Program
         {
             Console.WriteLine(token.ToString());
         }
-
+        var astPrinter = new AstPrinter();
+        var parser = new Parser(lexer.Tokens);
+        foreach (var expr in parser.Parse())
+        {
+            Console.WriteLine(astPrinter.Print(expr));
+        }
     }
 }
